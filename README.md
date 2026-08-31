@@ -76,8 +76,8 @@ nada más en la máquina.
 ## Cómo empezar
 
 ```powershell
-git clone <url-del-repositorio>
-cd ciclo-ia-upea\dia-1-api-core
+git clone git@github.com:alexanderbismark007/agentes-v0.git
+cd agentes-v0\dia-1-api-core
 .\tareas.ps1 levantar
 ```
 

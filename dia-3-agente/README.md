@@ -173,7 +173,7 @@ auditar no es admisible en un entorno institucional.
 .\tareas.ps1 probar
 ```
 
-102 pruebas, sin credenciales ni conexión a Internet.
+107 pruebas, sin credenciales ni conexión a Internet.
 
 ---
 

@@ -73,6 +73,7 @@ switch ($Tarea) {
     'levantar' {
         Asegurar-ArchivoEntorno
         Escribir-Titulo 'Levantando los servicios con Docker'
+        Write-Host 'La primera vez se descargan los modelos y puede tardar varios minutos.' -ForegroundColor DarkGray
         docker compose up --build -d
         Confirmar-Exito 'El arranque de los contenedores'
 
@@ -81,6 +82,10 @@ switch ($Tarea) {
         Write-Host '  API ............ http://localhost:8080'
         Write-Host '  Documentacion .. http://localhost:8080/swagger'
         Write-Host '  Estado ......... http://localhost:8080/salud'
+        Write-Host '  Orquestador .... http://localhost:5678'
+        Write-Host '  Correo ......... http://localhost:8025'
+        Write-Host ''
+        Write-Host 'El servicio de modelos no publica puertos: solo la API lo alcanza.' -ForegroundColor DarkGray
     }
 
     'bajar' {
@@ -92,6 +97,7 @@ switch ($Tarea) {
     'reiniciar' {
         Escribir-Titulo 'Reiniciando desde cero (se borran los datos)'
         docker compose down -v
+        Write-Host 'Se conservan los modelos ya descargados; solo se borran los datos.' -ForegroundColor DarkGray
         docker compose up --build -d
         Confirmar-Exito 'El reinicio'
     }

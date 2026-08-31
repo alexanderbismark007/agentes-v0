@@ -1,0 +1,32 @@
+# Normaliza los finales de linea al versionar.
+#
+# Sin esto, cada persona sube el estilo de su sistema operativo y los
+# historiales se llenan de diferencias que no cambian una sola instruccion.
+# Se guarda siempre LF en el repositorio y cada quien recibe lo que su
+# plataforma espera al obtener los archivos.
+* text=auto eol=lf
+
+# Archivos que deben conservar CRLF incluso en Linux, porque solo se ejecutan
+# en Windows.
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Archivos que deben conservar LF incluso en Windows, porque se ejecutan
+# dentro de contenedores Linux.
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+*.Dockerfile  text eol=lf
+
+# Binarios: no se les toca el contenido.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.zip   binary
+*.gz    binary
+
+# Los archivos de solucion de Visual Studio son sensibles al formato.
+*.sln   text eol=crlf

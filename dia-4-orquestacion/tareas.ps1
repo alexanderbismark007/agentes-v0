@@ -81,6 +81,10 @@ switch ($Tarea) {
         Write-Host '  API ............ http://localhost:8080'
         Write-Host '  Documentacion .. http://localhost:8080/swagger'
         Write-Host '  Estado ......... http://localhost:8080/salud'
+        Write-Host '  Orquestador .... http://localhost:5678'
+        Write-Host '  Correo ......... http://localhost:8025'
+        Write-Host ''
+        Write-Host 'Importe flujos/mesa-ayuda-ingreso.json en n8n para activar el flujo.' -ForegroundColor DarkGray
     }
 
     'bajar' {

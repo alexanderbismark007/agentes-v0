@@ -172,7 +172,7 @@ Cada envío del formulario aparecerá en la bandeja de http://localhost:8025.
 .\tareas.ps1 probar
 ```
 
-129 pruebas, sin credenciales ni conexión a Internet.
+134 pruebas, sin credenciales ni conexión a Internet.
 
 ---
 

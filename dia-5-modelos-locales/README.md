@@ -94,7 +94,7 @@ conexión. Quedan guardados en un volumen: los arranques siguientes son inmediat
 .\tareas.ps1 probar
 ```
 
-145 pruebas. Las del proveedor local **no necesitan Ollama**: sustituyen el transporte HTTP
+150 pruebas. Las del proveedor local **no necesitan Ollama**: sustituyen el transporte HTTP
 y verifican que el adaptador construya la petición correcta, interprete la respuesta y
 traduzca cada falla a un error comprensible.
 

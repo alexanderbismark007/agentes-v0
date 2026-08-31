@@ -1,0 +1,23 @@
+{
+  "name": "mesa-ayuda-cliente",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@primeuix/themes": "^2.0.3",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.4.1",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@vue/test-utils": "^2.4.11",
+    "jsdom": "^30.0.1",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.11"
+  }
+}

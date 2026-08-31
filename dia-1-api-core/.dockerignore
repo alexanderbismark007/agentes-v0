@@ -6,3 +6,9 @@
 .git/
 .gitignore
 **/*.md
+
+# El cliente se compila dentro de la imagen: entra el codigo fuente, no las
+# dependencias ya instaladas ni la salida de una compilacion local.
+cliente/node_modules/
+cliente/dist/
+src/MesaAyuda.Api/wwwroot/

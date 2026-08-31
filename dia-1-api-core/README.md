@@ -19,7 +19,8 @@ Una API REST con:
 - Listado con filtros, búsqueda por texto y paginación.
 - Indicadores operativos para el tablero de la mesa de ayuda.
 - **Documentación interactiva** generada automáticamente.
-- **48 pruebas automatizadas** que cubren dominio, validación y endpoints.
+- **Interfaz web** en Vue 3 con PrimeVue, servida por la propia API.
+- **67 pruebas automatizadas**: 48 de la API y 19 de la interfaz.
 
 Y una decisión de diseño que sostiene todo el ciclo: la **abstracción de proveedores**.
 
@@ -108,6 +109,42 @@ Requiere PostgreSQL en `localhost:5432` con la base `mesa_ayuda`.
 ```powershell
 .\tareas.ps1 probar
 ```
+
+Ejecuta las 48 pruebas de la API y las 19 de la interfaz.
+
+---
+
+## La interfaz web
+
+Vue 3 con PrimeVue, en `cliente/`. Se compila **dentro de la imagen de Docker**, así que
+`levantar` la deja disponible en http://localhost:8080 sin instalar Node en la máquina.
+
+Node solo hace falta para trabajar con recarga en caliente:
+
+```powershell
+.\tareas.ps1 interfaz     # http://localhost:5173, contra la API en el 8080
+```
+
+```
+cliente/
+├── src/
+│   ├── config/tema.js        Preset de PrimeVue y traducción de los enumerados
+│   ├── servicios/api.js      Única capa que habla con la API
+│   ├── composables/          Lógica reutilizable entre vistas
+│   └── componentes/          Barra lateral, tablero, solicitudes, diálogos
+└── pruebas/                  Pruebas con Vitest
+```
+
+Dos decisiones que conviene mirar en clase:
+
+**La interfaz no tiene su propia copia de la máquina de estados.** Los botones de transición
+se arman con lo que devuelve `transicionesPermitidas` en cada respuesta. Si el cliente
+tuviera su propia lista, tarde o temprano ofrecería una transición que el servidor rechaza
+y la persona vería un error sin entender por qué.
+
+**Tampoco duplica las reglas de validación.** El formulario no comprueba longitudes ni
+formatos: envía y muestra los errores por campo que devuelve el validador del servidor. Dos
+definiciones de "dato válido" siempre terminan divergiendo.
 
 ---
 
@@ -224,7 +261,7 @@ cero. El servicio de fondo nunca depende de la disponibilidad del modelo.
 inconsistente, sin importar qué código la use.
 
 **Las pruebas no necesitan Internet ni credenciales.** El proveedor `simulado` es
-determinista, y por eso las 48 pruebas corren en segundos en cualquier máquina.
+determinista, y por eso las pruebas corren en segundos en cualquier máquina.
 
 ---
 

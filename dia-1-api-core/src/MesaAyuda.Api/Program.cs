@@ -40,8 +40,12 @@ aplicacion.MapGet("/salud", (IProveedorLenguaje proveedor) => Results.Ok(new
     .WithName("Salud")
     .WithSummary("Verifica que el servicio responde e informa el proveedor activo");
 
-aplicacion.MapGet("/", () => Results.Redirect("/swagger"))
-    .ExcludeFromDescription();
+// La interfaz web se sirve desde wwwroot, generada por el proyecto de cliente.
+// Cualquier ruta que no corresponda a la API ni a la documentacion devuelve la
+// pagina principal, para que la navegacion del navegador funcione.
+aplicacion.UseDefaultFiles();
+aplicacion.UseStaticFiles();
+aplicacion.MapFallbackToFile("index.html");
 
 await PrepararBaseDeDatosAsync(aplicacion);
 

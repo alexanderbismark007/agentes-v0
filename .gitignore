@@ -1,0 +1,32 @@
+# Compilacion de .NET
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userprefs
+.vs/
+artifacts/
+
+# Entornos de desarrollo
+.vscode/
+.idea/
+*.swp
+
+# Variables de entorno y credenciales: nunca se versionan
+.env
+.env.local
+*.env.local
+secretos/
+
+# Datos generados en tiempo de ejecucion
+almacenamiento/
+subidas/
+*.db
+*.sqlite
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+.DS_Store

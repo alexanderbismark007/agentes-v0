@@ -1,0 +1,42 @@
+name: mesa-ayuda-dia1
+
+services:
+  base-datos:
+    image: postgres:16-alpine
+    container_name: mesa-base-datos
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mesa_ayuda}
+      POSTGRES_USER: ${POSTGRES_USER:-mesa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mesa}
+    ports:
+      - "${PUERTO_BASE_DATOS:-5432}:5432"
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mesa} -d ${POSTGRES_DB:-mesa_ayuda}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/MesaAyuda.Api/Dockerfile
+    container_name: mesa-api
+    depends_on:
+      base-datos:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__BaseDatos: "Host=base-datos;Port=5432;Database=${POSTGRES_DB:-mesa_ayuda};Username=${POSTGRES_USER:-mesa};Password=${POSTGRES_PASSWORD:-mesa}"
+      Proveedores__Lenguaje: ${PROVEEDOR_LENGUAJE:-simulado}
+      Proveedores__Nube__UrlBase: ${NUBE_URL_BASE:-https://api.openai.com/v1}
+      Proveedores__Nube__ClaveApi: ${NUBE_CLAVE_API:-}
+      Proveedores__Nube__ModeloLenguaje: ${NUBE_MODELO:-gpt-4o-mini}
+    ports:
+      - "${PUERTO_API:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  datos-postgres:

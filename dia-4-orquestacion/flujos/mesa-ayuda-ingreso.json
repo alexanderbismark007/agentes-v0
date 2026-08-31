@@ -1,0 +1,266 @@
+{
+  "name": "Mesa de Ayuda - Ingreso de solicitudes",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Mesa de Ayuda Institucional",
+        "formDescription": "Complete el formulario para registrar su solicitud. Recibirá un acuse de recibo con el código de seguimiento.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nombre completo",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Correo institucional",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Asunto",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Descripcion del caso",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "formulario",
+      "name": "Formulario de solicitud",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [-260, 300],
+      "webhookId": "mesa-ayuda-formulario"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "titulo",
+              "name": "titulo",
+              "value": "={{ $json['Asunto'] }}",
+              "type": "string"
+            },
+            {
+              "id": "descripcion",
+              "name": "descripcion",
+              "value": "={{ $json['Descripcion del caso'] }}",
+              "type": "string"
+            },
+            {
+              "id": "nombre",
+              "name": "solicitanteNombre",
+              "value": "={{ $json['Nombre completo'] }}",
+              "type": "string"
+            },
+            {
+              "id": "correo",
+              "name": "solicitanteCorreo",
+              "value": "={{ $json['Correo institucional'] }}",
+              "type": "string"
+            },
+            {
+              "id": "referencia",
+              "name": "referenciaExterna",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "origen",
+              "name": "origen",
+              "value": "n8n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "preparar",
+      "name": "Preparar solicitud",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-40, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8080/api/v1/orquestacion/entrada/solicitudes",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          },
+          "retry": {
+            "retry": {
+              "maxTries": 3,
+              "waitBetweenTries": 2000
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "registrar",
+      "name": "Registrar en la API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [180, 300],
+      "onError": "continueErrorOutput",
+      "notes": "El ingreso es idempotente: si el reintento reenvia el mismo cuerpo, la API no duplica la solicitud."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "con-respaldo",
+              "leftValue": "={{ $json.respuestaConRespaldo }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "tiene-respaldo",
+      "name": "Tiene respaldo normativo",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [400, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "mesa-ayuda@upea.bo",
+        "toEmail": "={{ $json.correoDestinatario }}",
+        "subject": "={{ $json.asuntoRespuesta }}",
+        "emailFormat": "text",
+        "text": "={{ $json.cuerpoRespuesta }}",
+        "options": {}
+      },
+      "id": "correo-con-respaldo",
+      "name": "Enviar respuesta con normativa",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [640, 120],
+      "credentials": {
+        "smtp": {
+          "id": "mailpit",
+          "name": "Mailpit local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "mesa-ayuda@upea.bo",
+        "toEmail": "={{ $json.correoDestinatario }}",
+        "subject": "={{ $json.asuntoRespuesta }}",
+        "emailFormat": "text",
+        "text": "={{ $json.cuerpoRespuesta }}",
+        "options": {}
+      },
+      "id": "correo-acuse",
+      "name": "Enviar acuse de recibo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [640, 300],
+      "credentials": {
+        "smtp": {
+          "id": "mailpit",
+          "name": "Mailpit local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8080/api/v1/solicitudes/{{ $('Registrar en la API').item.json.solicitudId }}/comentarios",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ autor: 'n8n', contenido: 'Acuse de recibo enviado a ' + $('Registrar en la API').item.json.correoDestinatario + '.', esInterno: true }) }}",
+        "options": {}
+      },
+      "id": "registrar-envio",
+      "name": "Registrar envio en el expediente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 200],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fromEmail": "mesa-ayuda@upea.bo",
+        "toEmail": "soporte-sistemas@upea.bo",
+        "subject": "=Fallo en el ingreso automatizado de solicitudes",
+        "emailFormat": "text",
+        "text": "=No se pudo registrar una solicitud enviada desde el formulario.\n\nDetalle del error:\n{{ JSON.stringify($json, null, 2) }}\n\nRevise la bitacora en /api/v1/orquestacion/eventos.",
+        "options": {}
+      },
+      "id": "alerta-fallo",
+      "name": "Alertar al equipo de sistemas",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [400, 460],
+      "credentials": {
+        "smtp": {
+          "id": "mailpit",
+          "name": "Mailpit local"
+        }
+      },
+      "notes": "Un flujo que falla en silencio equivale a un tramite perdido. Toda rama de error debe avisar a alguien."
+    }
+  ],
+  "connections": {
+    "Formulario de solicitud": {
+      "main": [[{ "node": "Preparar solicitud", "type": "main", "index": 0 }]]
+    },
+    "Preparar solicitud": {
+      "main": [[{ "node": "Registrar en la API", "type": "main", "index": 0 }]]
+    },
+    "Registrar en la API": {
+      "main": [
+        [{ "node": "Tiene respaldo normativo", "type": "main", "index": 0 }],
+        [{ "node": "Alertar al equipo de sistemas", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tiene respaldo normativo": {
+      "main": [
+        [{ "node": "Enviar respuesta con normativa", "type": "main", "index": 0 }],
+        [{ "node": "Enviar acuse de recibo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar respuesta con normativa": {
+      "main": [[{ "node": "Registrar envio en el expediente", "type": "main", "index": 0 }]]
+    },
+    "Enviar acuse de recibo": {
+      "main": [[{ "node": "Registrar envio en el expediente", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "mesa-ayuda-upea"
+  },
+  "tags": []
+}

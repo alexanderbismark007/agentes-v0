@@ -1,0 +1,93 @@
+name: mesa-ayuda-dia4
+
+services:
+  base-datos:
+    image: pgvector/pgvector:pg16
+    container_name: mesa-base-datos
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mesa_ayuda}
+      POSTGRES_USER: ${POSTGRES_USER:-mesa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mesa}
+    ports:
+      - "${PUERTO_BASE_DATOS:-5432}:5432"
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mesa} -d ${POSTGRES_DB:-mesa_ayuda}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/MesaAyuda.Api/Dockerfile
+    container_name: mesa-api
+    depends_on:
+      base-datos:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__BaseDatos: "Host=base-datos;Port=5432;Database=${POSTGRES_DB:-mesa_ayuda};Username=${POSTGRES_USER:-mesa};Password=${POSTGRES_PASSWORD:-mesa}"
+      Proveedores__Lenguaje: ${PROVEEDOR_LENGUAJE:-simulado}
+      Proveedores__Embeddings: ${PROVEEDOR_EMBEDDINGS:-simulado}
+      Agente__MaximoIteraciones: ${AGENTE_MAX_ITERACIONES:-6}
+      Proveedores__Nube__UrlBase: ${NUBE_URL_BASE:-https://api.openai.com/v1}
+      Proveedores__Nube__ClaveApi: ${NUBE_CLAVE_API:-}
+      Proveedores__Nube__ModeloLenguaje: ${NUBE_MODELO:-gpt-4o-mini}
+      Proveedores__Nube__ModeloEmbeddings: ${NUBE_MODELO_EMBEDDINGS:-text-embedding-3-small}
+      Proveedores__Nube__DimensionesEmbedding: ${NUBE_DIMENSIONES:-384}
+      Orquestacion__ExigirFirma: ${EXIGIR_FIRMA:-false}
+      Orquestacion__SecretoWebhook: ${SECRETO_WEBHOOK:-}
+    ports:
+      - "${PUERTO_API:-8080}:8080"
+    restart: unless-stopped
+
+  # Servidor de correo de prueba. Acepta todo lo que se le envie y no reenvia
+  # nada al exterior: se puede demostrar el envio sin riesgo de escribirle
+  # realmente a una persona.
+  correo:
+    image: axllent/mailpit:latest
+    container_name: mesa-correo
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "${PUERTO_CORREO_WEB:-8025}:8025"
+      - "${PUERTO_CORREO_SMTP:-1025}:1025"
+    restart: unless-stopped
+
+  orquestador:
+    image: n8nio/n8n:latest
+    container_name: mesa-n8n
+    depends_on:
+      - api
+      - correo
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:${PUERTO_N8N:-5678}/
+      GENERIC_TIMEZONE: America/La_Paz
+      TZ: America/La_Paz
+
+      # Sin cifrado propio n8n genera una clave nueva en cada arranque y las
+      # credenciales guardadas dejan de poder descifrarse.
+      N8N_ENCRYPTION_KEY: ${N8N_CLAVE_CIFRADO:-clave-de-desarrollo-cambiar-en-produccion}
+
+      N8N_DIAGNOSTICS_ENABLED: false
+      N8N_RUNNERS_ENABLED: true
+      N8N_BASIC_AUTH_ACTIVE: ${N8N_AUTENTICACION:-false}
+      N8N_BASIC_AUTH_USER: ${N8N_USUARIO:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_CLAVE:-admin}
+    ports:
+      - "${PUERTO_N8N:-5678}:5678"
+    volumes:
+      - datos-n8n:/home/node/.n8n
+      - ./flujos:/flujos:ro
+    restart: unless-stopped
+
+volumes:
+  datos-postgres:
+  datos-n8n:

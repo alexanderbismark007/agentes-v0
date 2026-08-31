@@ -39,35 +39,52 @@ public sealed record Decision
             using var documento = JsonDocument.Parse(json);
             var raiz = documento.RootElement;
 
-            var accion = LeerTexto(raiz, "accion")?.ToLowerInvariant();
+            var accion = LeerTexto(raiz, "accion")?.Trim();
+            var respuesta = LeerTexto(raiz, "respuesta");
 
-            if (accion == "herramienta")
+            // Si el modelo redactó una respuesta, esa es su intención, sin
+            // importar cómo haya rotulado la acción.
+            if (!string.IsNullOrWhiteSpace(respuesta))
             {
-                var herramienta = LeerTexto(raiz, "herramienta");
+                return Final(respuesta);
+            }
 
-                if (string.IsNullOrWhiteSpace(herramienta))
-                {
-                    return Final("El agente indicó usar una herramienta pero no especificó cuál.");
-                }
+            // El nombre de la herramienta se busca donde el modelo lo haya
+            // puesto. Los modelos pequeños suelen rotular mal el campo "accion"
+            // y escribir ahí el nombre de la herramienta, o poner el nombre
+            // correcto en "herramienta" pero con una acción mal escrita.
+            // Exigir el rótulo exacto haría que esas salidas se interpretaran
+            // como respuesta final y el JSON crudo terminaría mostrándose al
+            // usuario.
+            var herramienta = LeerTexto(raiz, "herramienta")
+                              ?? LeerTexto(raiz, "tool")
+                              ?? LeerTexto(raiz, "nombre");
 
-                var argumentos = raiz.TryGetProperty("argumentos", out var propiedad)
-                                 && propiedad.ValueKind == JsonValueKind.Object
-                    ? propiedad.Clone()
-                    : Vacio;
+            if (string.IsNullOrWhiteSpace(herramienta)
+                && !string.IsNullOrWhiteSpace(accion)
+                && !EsRotuloDeAccion(accion))
+            {
+                herramienta = accion;
+            }
 
+            if (!string.IsNullOrWhiteSpace(herramienta))
+            {
                 return new Decision
                 {
                     EsRespuestaFinal = false,
                     Herramienta = herramienta,
-                    Argumentos = argumentos
+                    Argumentos = LeerArgumentos(raiz)
                 };
             }
 
-            var respuesta = LeerTexto(raiz, "respuesta");
+            if (string.Equals(accion, "herramienta", StringComparison.OrdinalIgnoreCase))
+            {
+                return Final("El agente indicó usar una herramienta pero no especificó cuál.");
+            }
 
-            return Final(string.IsNullOrWhiteSpace(respuesta)
-                ? contenido.Trim()
-                : respuesta);
+            // Un objeto JSON que no se pudo interpretar no debe mostrarse tal
+            // cual: el usuario recibiría la mecánica interna del agente.
+            return Final("El agente no produjo una respuesta interpretable para esa consulta.");
         }
         catch (JsonException)
         {
@@ -80,6 +97,33 @@ public sealed record Decision
         EsRespuestaFinal = true,
         Respuesta = respuesta
     };
+
+    /// <summary>
+    /// Indica si el valor del campo "accion" es uno de los rótulos previstos y
+    /// no el nombre de una herramienta escrito en el lugar equivocado.
+    /// </summary>
+    private static bool EsRotuloDeAccion(string accion) =>
+        accion.Equals("herramienta", StringComparison.OrdinalIgnoreCase)
+        || accion.Equals("responder", StringComparison.OrdinalIgnoreCase)
+        || accion.Equals("tool", StringComparison.OrdinalIgnoreCase)
+        || accion.Equals("respuesta", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Lee los argumentos aceptando los nombres que usan distintos modelos.
+    /// </summary>
+    private static JsonElement LeerArgumentos(JsonElement raiz)
+    {
+        foreach (var nombre in (string[])["argumentos", "arguments", "parametros", "input"])
+        {
+            if (raiz.TryGetProperty(nombre, out var propiedad)
+                && propiedad.ValueKind == JsonValueKind.Object)
+            {
+                return propiedad.Clone();
+            }
+        }
+
+        return Vacio;
+    }
 
     private static string? LeerTexto(JsonElement raiz, string propiedad) =>
         raiz.TryGetProperty(propiedad, out var valor) && valor.ValueKind == JsonValueKind.String

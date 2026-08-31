@@ -1,0 +1,199 @@
+name: mesa-ayuda-dia5
+
+# Dos redes en lugar de una.
+#
+# La base de datos y el servicio de modelos viven en una red interna sin salida
+# a Internet: aunque alguien lograra ejecutar algo dentro de esos contenedores,
+# no podria sacar datos hacia afuera. Solo la API, el correo y el orquestador
+# pertenecen a ambas, y son los unicos que publican puertos hacia el equipo.
+networks:
+  interna:
+    internal: true
+  publica:
+
+services:
+  base-datos:
+    image: pgvector/pgvector:pg16
+    container_name: mesa-base-datos
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mesa_ayuda}
+      POSTGRES_USER: ${POSTGRES_USER:-mesa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en el archivo .env}
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    networks:
+      - interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mesa} -d ${POSTGRES_DB:-mesa_ayuda}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    restart: unless-stopped
+
+  # Descarga los modelos al volumen compartido y termina.
+  #
+  # Es un contenedor aparte, y no un paso del servicio de modelos, porque la
+  # descarga si necesita salida a Internet para contactar al registro publico.
+  # Levanta un servidor efimero, deja los archivos en el volumen y se apaga. El
+  # servicio que despues atiende las consultas queda aislado, sirviendo modelos
+  # que ya estan en disco.
+  #
+  # Si los modelos ya fueron descargados, las descargas no vuelven a ocurrir.
+  descarga-modelos:
+    image: ollama/ollama:latest
+    container_name: mesa-descarga-modelos
+    volumes:
+      - modelos-ollama:/root/.ollama
+    networks:
+      - publica
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve >/tmp/servidor.log 2>&1 &
+        echo "Esperando al servidor temporal..."
+        intentos=0
+        until ollama list >/dev/null 2>&1; do
+          intentos=$$((intentos + 1))
+          if [ $$intentos -gt 60 ]; then
+            echo "El servidor temporal no respondio a tiempo."
+            cat /tmp/servidor.log
+            exit 1
+          fi
+          sleep 1
+        done
+        echo "Descargando el modelo de lenguaje ${MODELO_LENGUAJE:-llama3.2:3b}..."
+        ollama pull ${MODELO_LENGUAJE:-llama3.2:3b} || exit 1
+        echo "Descargando el modelo de embeddings ${MODELO_EMBEDDINGS:-all-minilm}..."
+        ollama pull ${MODELO_EMBEDDINGS:-all-minilm} || exit 1
+        echo "Modelos disponibles:"
+        ollama list
+    restart: "no"
+
+  # Servicio de modelos local. No publica puertos y no tiene salida a Internet:
+  # solo la API lo alcanza, a traves de la red interna. Ollama no trae
+  # autenticacion propia, asi que dejarlo expuesto equivaldria a un servicio
+  # abierto sin credenciales.
+  modelos:
+    image: ollama/ollama:latest
+    container_name: mesa-modelos
+    depends_on:
+      descarga-modelos:
+        condition: service_completed_successfully
+    volumes:
+      - modelos-ollama:/root/.ollama
+    networks:
+      - interna
+    environment:
+      # Cuantos modelos se mantienen cargados a la vez y cuanto tiempo. Cada
+      # modelo cargado ocupa memoria de forma permanente.
+      OLLAMA_MAX_LOADED_MODELS: ${OLLAMA_MODELOS_CARGADOS:-1}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_TIEMPO_CARGA:-10m}
+      OLLAMA_NUM_PARALLEL: ${OLLAMA_PARALELO:-1}
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          # Un modelo sin limite puede consumir toda la memoria del equipo y
+          # dejar sin recursos al resto de los servicios.
+          memory: ${LIMITE_MEMORIA_MODELOS:-6g}
+          cpus: "${LIMITE_CPU_MODELOS:-4}"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/MesaAyuda.Api/Dockerfile
+    container_name: mesa-api
+    depends_on:
+      base-datos:
+        condition: service_healthy
+      modelos:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__BaseDatos: "Host=base-datos;Port=5432;Database=${POSTGRES_DB:-mesa_ayuda};Username=${POSTGRES_USER:-mesa};Password=${POSTGRES_PASSWORD}"
+
+      Proveedores__Lenguaje: ${PROVEEDOR_LENGUAJE:-local}
+      Proveedores__Embeddings: ${PROVEEDOR_EMBEDDINGS:-local}
+
+      Proveedores__Local__UrlBase: http://modelos:11434
+      Proveedores__Local__ModeloLenguaje: ${MODELO_LENGUAJE:-llama3.2:3b}
+      Proveedores__Local__ModeloEmbeddings: ${MODELO_EMBEDDINGS:-all-minilm}
+      Proveedores__Local__VentanaContexto: ${VENTANA_CONTEXTO:-4096}
+      Proveedores__Local__TiempoEsperaSegundos: ${TIEMPO_ESPERA_LOCAL:-180}
+
+      Proveedores__Nube__UrlBase: ${NUBE_URL_BASE:-https://api.openai.com/v1}
+      Proveedores__Nube__ClaveApi: ${NUBE_CLAVE_API:-}
+      Proveedores__Nube__ModeloLenguaje: ${NUBE_MODELO:-gpt-4o-mini}
+      Proveedores__Nube__ModeloEmbeddings: ${NUBE_MODELO_EMBEDDINGS:-text-embedding-3-small}
+      Proveedores__Nube__DimensionesEmbedding: ${NUBE_DIMENSIONES:-384}
+
+      Agente__MaximoIteraciones: ${AGENTE_MAX_ITERACIONES:-6}
+      Orquestacion__ExigirFirma: ${EXIGIR_FIRMA:-true}
+      Orquestacion__SecretoWebhook: ${SECRETO_WEBHOOK:?Defina SECRETO_WEBHOOK en el archivo .env}
+    ports:
+      - "${PUERTO_API:-8080}:8080"
+    networks:
+      - interna
+      - publica
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    restart: unless-stopped
+
+  correo:
+    image: axllent/mailpit:latest
+    container_name: mesa-correo
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "${PUERTO_CORREO_WEB:-8025}:8025"
+    networks:
+      - interna
+      - publica
+    restart: unless-stopped
+
+  orquestador:
+    image: n8nio/n8n:latest
+    container_name: mesa-n8n
+    depends_on:
+      - api
+      - correo
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:${PUERTO_N8N:-5678}/
+      GENERIC_TIMEZONE: America/La_Paz
+      TZ: America/La_Paz
+      N8N_ENCRYPTION_KEY: ${N8N_CLAVE_CIFRADO:?Defina N8N_CLAVE_CIFRADO en el archivo .env}
+      N8N_DIAGNOSTICS_ENABLED: false
+      N8N_RUNNERS_ENABLED: true
+      N8N_BASIC_AUTH_ACTIVE: ${N8N_AUTENTICACION:-true}
+      N8N_BASIC_AUTH_USER: ${N8N_USUARIO:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_CLAVE:?Defina N8N_CLAVE en el archivo .env}
+    ports:
+      - "${PUERTO_N8N:-5678}:5678"
+    volumes:
+      - datos-n8n:/home/node/.n8n
+      - ./flujos:/flujos:ro
+    networks:
+      - interna
+      - publica
+    restart: unless-stopped
+
+volumes:
+  datos-postgres:
+  datos-n8n:
+  modelos-ollama:

@@ -17,10 +17,10 @@ y atención de solicitudes de la comunidad universitaria.
 | Día | Carpeta | Módulo que se agrega | Producto de la sesión |
 |-----|---------|----------------------|-----------------------|
 | 1 | [`dia-1-api-core/`](dia-1-api-core/) | API REST, dominio y pruebas | API funcional con validaciones, documentación y pruebas |
-| 2 | `dia-2-rag/` | Conocimiento documental | Asistente que responde sobre el reglamento citando la fuente |
-| 3 | `dia-3-agente/` | Agente con herramientas | Agente que consulta datos y genera un reporte ejecutivo |
-| 4 | `dia-4-orquestacion/` | Automatización de procesos | Flujo que clasifica, consulta, responde por correo y registra |
-| 5 | `dia-5-modelos-locales/` | Inferencia local | Sistema completo corriendo con un modelo propio |
+| 2 | [`dia-2-rag/`](dia-2-rag/) | Conocimiento documental | Asistente que responde sobre el reglamento citando la fuente |
+| 3 | [`dia-3-agente/`](dia-3-agente/) | Agente con herramientas | Agente que consulta datos y genera un reporte ejecutivo |
+| 4 | [`dia-4-orquestacion/`](dia-4-orquestacion/) | Automatización de procesos | Flujo que clasifica, consulta, responde por correo y registra |
+| 5 | [`dia-5-modelos-locales/`](dia-5-modelos-locales/) | Inferencia local | Sistema completo corriendo con un modelo propio |
 
 Cada carpeta contiene el **proyecto completo hasta ese día** y se ejecuta por sí sola. Quien
 falte a una sesión puede incorporarse a la siguiente sin quedar atrás; y quien quiera ver
@@ -96,6 +96,23 @@ toda la batería de pruebas en cualquier máquina.
 
 Las credenciales, cuando se usen, van en un archivo `.env` que **no se versiona**. Cada
 proyecto incluye un `.env.ejemplo` como plantilla.
+
+---
+
+## Estado de cada proyecto
+
+Cada carpeta compila, se levanta con un comando y trae su batería de pruebas en verde.
+
+| Día | Pruebas | Servicios que levanta |
+|-----|---------|-----------------------|
+| 1 | 48 | API, PostgreSQL |
+| 2 | 79 | API, PostgreSQL con pgvector |
+| 3 | 107 | API, PostgreSQL con pgvector |
+| 4 | 134 | API, PostgreSQL, n8n, correo de prueba |
+| 5 | 150 | API, PostgreSQL, n8n, correo, servicio de modelos local |
+
+Las pruebas corren **sin credenciales, sin Internet y sin Docker**: el proveedor `simulado`
+resuelve localmente todo lo que en producción resolvería un modelo.
 
 ---
 

@@ -172,7 +172,20 @@ Cada envío del formulario aparecerá en la bandeja de http://localhost:8025.
 .\tareas.ps1 probar
 ```
 
-134 pruebas, sin credenciales ni conexión a Internet.
+153 pruebas (134 de la API y 19 de la interfaz), sin credenciales ni conexión a Internet.
+
+---
+
+## La interfaz web
+
+Se agrega la vista **Automatización**: los indicadores de salud del canal y la bitácora completa de eventos, incluidos los rechazados. La tasa de éxito se pinta según su valor para que una caída se note sin tener que leer números.
+
+Vive en `cliente/` y se compila **dentro de la imagen**, así que `levantar` la deja lista
+en http://localhost:8080. Node solo hace falta para trabajar con recarga en caliente:
+
+```powershell
+.\tareas.ps1 interfaz
+```
 
 ---
 

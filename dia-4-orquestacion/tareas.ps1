@@ -14,7 +14,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('ayuda', 'restaurar', 'construir', 'probar', 'ejecutar', 'levantar', 'bajar', 'reiniciar', 'registros', 'migracion', 'limpiar')]
+    [ValidateSet('ayuda', 'restaurar', 'construir', 'probar', 'ejecutar', 'interfaz', 'levantar', 'bajar', 'reiniciar', 'registros', 'migracion', 'limpiar')]
     [string]$Tarea = 'ayuda',
 
     [Parameter(Position = 1, ValueFromRemainingArguments = $true)]
@@ -59,9 +59,29 @@ switch ($Tarea) {
     }
 
     'probar' {
-        Escribir-Titulo 'Ejecutando las pruebas'
+        Escribir-Titulo 'Ejecutando las pruebas de la API'
         dotnet test --logger "console;verbosity=normal"
-        Confirmar-Exito 'La ejecucion de pruebas'
+        Confirmar-Exito 'La ejecucion de pruebas de la API'
+
+        Escribir-Titulo 'Ejecutando las pruebas de la interfaz'
+        Push-Location (Join-Path  'cliente')
+        try {
+            if (-not (Test-Path 'node_modules')) { npm install }
+            npm test
+            Confirmar-Exito 'La ejecucion de pruebas de la interfaz'
+        }
+        finally { Pop-Location }
+    }
+
+    'interfaz' {
+        Escribir-Titulo 'Interfaz con recarga en caliente'
+        Write-Host 'Requiere la API levantada en el puerto 8080: .	areas.ps1 levantar' -ForegroundColor DarkGray
+        Push-Location (Join-Path  'cliente')
+        try {
+            if (-not (Test-Path 'node_modules')) { npm install }
+            npm run dev
+        }
+        finally { Pop-Location }
     }
 
     'ejecutar' {
@@ -130,6 +150,7 @@ switch ($Tarea) {
         Write-Host '  construir   Compila la solucion en configuracion Release.'
         Write-Host '  probar      Ejecuta la bateria de pruebas automatizadas.'
         Write-Host '  ejecutar    Levanta la API directamente con dotnet run.'
+        Write-Host '  interfaz    Levanta la interfaz con recarga en caliente.'
         Write-Host '  levantar    Levanta API y base de datos con Docker.'
         Write-Host '  bajar       Detiene los contenedores.'
         Write-Host '  reiniciar   Rehace los contenedores y borra los datos.'

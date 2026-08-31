@@ -1,0 +1,139 @@
+:root {
+    color-scheme: light dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--p-surface-100);
+    color: var(--p-text-color);
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: var(--p-surface-950);
+    }
+}
+
+.disposicion {
+    display: flex;
+    min-height: 100vh;
+}
+
+.contenido {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-x: auto;
+}
+
+.encabezado-vista {
+    margin-bottom: 1.25rem;
+}
+
+.encabezado-vista h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.encabezado-vista p {
+    margin: 0;
+    color: var(--p-text-muted-color);
+    font-size: 0.9rem;
+}
+
+.rejilla-indicadores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.indicador {
+    background: var(--p-content-background);
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-content-border-radius);
+    padding: 1rem 1.15rem;
+}
+
+.indicador .etiqueta {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--p-text-muted-color);
+}
+
+.indicador .valor {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-top: 0.35rem;
+}
+
+.indicador .nota {
+    font-size: 0.8rem;
+    color: var(--p-text-muted-color);
+}
+
+.barra-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+}
+
+.campo label {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.detalle-lista {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.detalle-lista dt {
+    color: var(--p-text-muted-color);
+}
+
+.detalle-lista dd {
+    margin: 0;
+}
+
+.comentario {
+    border-left: 3px solid var(--p-content-border-color);
+    padding: 0.5rem 0 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.comentario.interno {
+    border-left-color: var(--p-primary-color);
+}
+
+.comentario .meta {
+    font-size: 0.78rem;
+    color: var(--p-text-muted-color);
+    margin-bottom: 0.2rem;
+}
+
+.vacio {
+    text-align: center;
+    padding: 2rem;
+    color: var(--p-text-muted-color);
+}

@@ -173,7 +173,20 @@ auditar no es admisible en un entorno institucional.
 .\tareas.ps1 probar
 ```
 
-107 pruebas, sin credenciales ni conexión a Internet.
+126 pruebas (107 de la API y 19 de la interfaz), sin credenciales ni conexión a Internet.
+
+---
+
+## La interfaz web
+
+Se agrega la vista **Agente**: la traza se ve paso a paso, con la herramienta elegida, sus argumentos y el tiempo de cada una. Las acciones retenidas por falta de aprobación aparecen destacadas: es lo que el sistema decidió **no** hacer, y esa decisión importa tanto como la respuesta.
+
+Vive en `cliente/` y se compila **dentro de la imagen**, así que `levantar` la deja lista
+en http://localhost:8080. Node solo hace falta para trabajar con recarga en caliente:
+
+```powershell
+.\tareas.ps1 interfaz
+```
 
 ---
 

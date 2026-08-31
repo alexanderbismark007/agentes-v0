@@ -103,13 +103,13 @@ proyecto incluye un `.env.ejemplo` como plantilla.
 
 Cada carpeta compila, se levanta con un comando y trae su batería de pruebas en verde.
 
-| Día | Pruebas | Servicios que levanta |
-|-----|---------|-----------------------|
-| 1 | 48 | API, PostgreSQL |
-| 2 | 79 | API, PostgreSQL con pgvector |
-| 3 | 107 | API, PostgreSQL con pgvector |
-| 4 | 134 | API, PostgreSQL, n8n, correo de prueba |
-| 5 | 150 | API, PostgreSQL, n8n, correo, servicio de modelos local |
+| Día | Pruebas (API + interfaz) | Servicios que levanta |
+|-----|--------------------------|-----------------------|
+| 1 | 48 + 19 | API, PostgreSQL |
+| 2 | 79 + 19 | API, PostgreSQL con pgvector |
+| 3 | 107 + 19 | API, PostgreSQL con pgvector |
+| 4 | 134 + 19 | API, PostgreSQL, n8n, correo de prueba |
+| 5 | 150 + 19 | API, PostgreSQL, n8n, correo, servicio de modelos local |
 
 Las pruebas corren **sin credenciales, sin Internet y sin Docker**: el proveedor `simulado`
 resuelve localmente todo lo que en producción resolvería un modelo.
@@ -135,9 +135,27 @@ dia-N-nombre/
 ├── tareas.ps1             Comandos frecuentes del proyecto
 ├── docker-compose.yml     Servicios necesarios
 ├── .env.ejemplo           Plantilla de configuración
-├── src/                   Código de la aplicación
-└── tests/                 Pruebas automatizadas
+├── src/                   Código de la API
+├── cliente/               Interfaz web en Vue 3 con PrimeVue
+└── tests/                 Pruebas de la API
 ```
+
+---
+
+## La interfaz web
+
+Cada día trae una interfaz en **Vue 3 con PrimeVue**, en `cliente/`, que crece con el
+sistema: tablero y solicitudes el día 1, consulta documental con sus fuentes el día 2,
+consola del agente con su traza el día 3, bitácora de automatización el día 4.
+
+**Se compila dentro de la imagen de Docker.** Quien solo ejecute `.\tareas.ps1 levantar` no
+necesita instalar Node: la interfaz queda servida por la propia API en el puerto 8080. Node
+hace falta únicamente para trabajar con recarga en caliente (`.\tareas.ps1 interfaz`).
+
+La interfaz no duplica reglas del servidor. No tiene su propia copia de la máquina de
+estados —los botones de transición se arman con lo que devuelve la API— ni sus propias
+reglas de validación —muestra los errores por campo que devuelve el validador—. Dos
+definiciones de la misma regla siempre terminan divergiendo.
 
 ---
 

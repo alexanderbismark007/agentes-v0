@@ -124,7 +124,20 @@ reprocesar lo que no cambió, así que reiniciar el servicio es barato.
 .\tareas.ps1 probar
 ```
 
-79 pruebas, sin credenciales ni conexión a Internet.
+98 pruebas (79 de la API y 19 de la interfaz), sin credenciales ni conexión a Internet.
+
+---
+
+## La interfaz web
+
+Se agrega la vista **Conocimiento**: la consulta documental muestra la respuesta junto a cada fuente, su artículo y su similitud, con el color de la etiqueta indicando cuánto respalda la afirmación. Cuando no hay respaldo, el sistema lo declara en lugar de improvisar.
+
+Vive en `cliente/` y se compila **dentro de la imagen**, así que `levantar` la deja lista
+en http://localhost:8080. Node solo hace falta para trabajar con recarga en caliente:
+
+```powershell
+.\tareas.ps1 interfaz
+```
 
 ---
 

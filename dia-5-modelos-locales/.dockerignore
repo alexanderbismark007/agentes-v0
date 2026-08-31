@@ -7,6 +7,8 @@
 .gitignore
 **/*.md
 
-# Los documentos institucionales si deben viajar en la imagen: son el
-# contenido que el modulo de conocimiento indexa al arrancar.
-!documentos/**
+# El cliente se compila dentro de la imagen: entra el codigo fuente, no las
+# dependencias ya instaladas ni la salida de una compilacion local.
+cliente/node_modules/
+cliente/dist/
+src/MesaAyuda.Api/wwwroot/

@@ -3,7 +3,6 @@ name: mesa-ayuda-dia3
 services:
   base-datos:
     image: pgvector/pgvector:pg16
-    container_name: mesa-base-datos
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-mesa_ayuda}
       POSTGRES_USER: ${POSTGRES_USER:-mesa}
@@ -23,7 +22,6 @@ services:
     build:
       context: .
       dockerfile: src/MesaAyuda.Api/Dockerfile
-    container_name: mesa-api
     depends_on:
       base-datos:
         condition: service_healthy

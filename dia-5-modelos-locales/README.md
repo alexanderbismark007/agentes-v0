@@ -94,9 +94,22 @@ conexión. Quedan guardados en un volumen: los arranques siguientes son inmediat
 .\tareas.ps1 probar
 ```
 
-150 pruebas. Las del proveedor local **no necesitan Ollama**: sustituyen el transporte HTTP
+169 pruebas: 150 de la API y 19 de la interfaz. Las del proveedor local **no necesitan Ollama**: sustituyen el transporte HTTP
 y verifican que el adaptador construya la petición correcta, interprete la respuesta y
 traduzca cada falla a un error comprensible.
+
+---
+
+## La interfaz web
+
+Se agrega la vista **proveedor activo**: la barra lateral informa de forma permanente qué proveedor está respondiendo y con cuántas dimensiones. Al cambiar entre nube y local varias veces durante la sesión, tenerlo a la vista evita atribuirle a un modelo el comportamiento de otro.
+
+Vive en `cliente/` y se compila **dentro de la imagen**, así que `levantar` la deja lista
+en http://localhost:8080. Node solo hace falta para trabajar con recarga en caliente:
+
+```powershell
+.\tareas.ps1 interfaz
+```
 
 ---
 

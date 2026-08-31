@@ -14,7 +14,6 @@ networks:
 services:
   base-datos:
     image: pgvector/pgvector:pg16
-    container_name: mesa-base-datos
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-mesa_ayuda}
       POSTGRES_USER: ${POSTGRES_USER:-mesa}
@@ -45,7 +44,6 @@ services:
   # Si los modelos ya fueron descargados, las descargas no vuelven a ocurrir.
   descarga-modelos:
     image: ollama/ollama:latest
-    container_name: mesa-descarga-modelos
     volumes:
       - modelos-ollama:/root/.ollama
     networks:
@@ -79,7 +77,6 @@ services:
   # abierto sin credenciales.
   modelos:
     image: ollama/ollama:latest
-    container_name: mesa-modelos
     depends_on:
       descarga-modelos:
         condition: service_completed_successfully
@@ -112,7 +109,6 @@ services:
     build:
       context: .
       dockerfile: src/MesaAyuda.Api/Dockerfile
-    container_name: mesa-api
     depends_on:
       base-datos:
         condition: service_healthy
@@ -153,7 +149,6 @@ services:
 
   correo:
     image: axllent/mailpit:latest
-    container_name: mesa-correo
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
@@ -166,7 +161,6 @@ services:
 
   orquestador:
     image: n8nio/n8n:latest
-    container_name: mesa-n8n
     depends_on:
       - api
       - correo

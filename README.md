@@ -141,8 +141,6 @@ dia-N-nombre/
 
 ---
 
-## Licencia y uso
+## Licencia
 
-Material didáctico preparado para el ciclo de charlas de la Carrera de Ingeniería de
-Sistemas de la Universidad Pública de El Alto. Los participantes pueden usarlo, estudiarlo
-y adaptarlo libremente para sus proyectos de grado, tesis o emprendimientos.
+MIT. Ver [LICENSE](LICENSE).

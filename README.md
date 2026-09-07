@@ -88,6 +88,10 @@ http://localhost:8080/swagger.
 > [PARA-ESTUDIANTES.md](PARA-ESTUDIANTES.md) hay un texto listo para copiar y pegar, junto
 > con la solución de los problemas más frecuentes.
 
+> ¿Quiere construirlo usted mismo en vez de clonarlo? En
+> [CONSTRUIR-DESDE-CERO.md](CONSTRUIR-DESDE-CERO.md) están los cinco textos, uno por sesión,
+> que levantan este mismo sistema partiendo de una carpeta vacía.
+
 Cada carpeta incluye su propio `README.md` con las instrucciones de la sesión y un archivo
 `EJERCICIOS.md` con el trabajo propuesto.
 

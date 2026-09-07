@@ -76,12 +76,17 @@ nada más en la máquina.
 ## Cómo empezar
 
 ```powershell
-git clone git@github.com:alexanderbismark007/agentes-v0.git
+git clone https://github.com/alexanderbismark007/agentes-v0.git
 cd agentes-v0\dia-1-api-core
 .\tareas.ps1 levantar
 ```
 
-Al terminar, la API queda disponible en http://localhost:8080/swagger.
+Al terminar, el sistema queda disponible en http://localhost:8080 y su documentación en
+http://localhost:8080/swagger.
+
+> Si prefiere que un agente de programación lo ponga en marcha por usted, en
+> [PARA-ESTUDIANTES.md](PARA-ESTUDIANTES.md) hay un texto listo para copiar y pegar, junto
+> con la solución de los problemas más frecuentes.
 
 Cada carpeta incluye su propio `README.md` con las instrucciones de la sesión y un archivo
 `EJERCICIOS.md` con el trabajo propuesto.
